@@ -46,11 +46,7 @@ function renderTagLinks(
   allSlugs: string[],
   linkResolution: "absolute" | "relative" | "shortest",
 ) {
-  const rawTags = Array.isArray(value)
-    ? value
-    : typeof value === "string"
-      ? [value]
-      : [];
+  const rawTags = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
 
   const tags = rawTags
     .filter((tag): tag is string => typeof tag === "string")
@@ -73,15 +69,9 @@ function renderTagLinks(
 
         return (
           <>
-            {index > 0 && (
-              <span class="bases-separator">, </span>
-            )}
+            {index > 0 && <span class="bases-separator">, </span>}
             <a
-              href={transformLink(
-                slug as FullSlug,
-                targetSlug,
-                transformOpts,
-              )}
+              href={transformLink(slug as FullSlug, targetSlug, transformOpts)}
               class="tag-link internal internal-link"
               data-slug={targetSlug}
             >
@@ -110,11 +100,7 @@ function renderRow(
         const value = resolveEntryPropertyValue(column, entry);
         const display = formatValue(value);
         const isPrimary = column === "file.name" || column === "title";
-        const isTagsColumn = [
-          "tags",
-          "note.tags",
-          "file.tags",
-        ].includes(column);
+        const isTagsColumn = ["tags", "note.tags", "file.tags"].includes(column);
         const columnWidth = view.columnSize?.[column];
         const style = columnWidth
           ? { width: `${columnWidth}px`, minWidth: `${columnWidth}px` }
@@ -125,11 +111,7 @@ function renderRow(
               renderTagLinks(value, slug, allSlugs, linkResolution)
             ) : isPrimary ? (
               <a
-                href={transformLink(
-                  slug as FullSlug,
-                  entry.slug,
-                  transformOpts,
-                )}
+                href={transformLink(slug as FullSlug, entry.slug, transformOpts)}
                 class="internal internal-link"
                 data-slug={entry.slug}
               >

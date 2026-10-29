@@ -1,13 +1,15 @@
-import type { ViewRenderer, ViewTypeRegistration } from "../../types";
 import type { FullSlug } from "@quartz-community/types";
+import { transformLink } from "@quartz-community/utils";
 import { i18n } from "../../i18n";
+import type { ViewRenderer, ViewTypeRegistration } from "../../types";
 import {
   getColumnLabel,
   isEmptyValue,
+  isTagProperty,
   renderCellValue,
+  renderTagLinks,
   resolveEntryPropertyValue,
 } from "../shared/cell";
-import { transformLink } from "@quartz-community/utils";
 
 function formatMessage(template: string, values: Record<string, string | number>): string {
   return Object.entries(values).reduce(
@@ -96,25 +98,43 @@ const CardsView: ViewRenderer = ({
               : undefined;
           const href = transformLink(slug as FullSlug, entry.slug, transformOpts);
           return (
-            <a href={href} class="internal internal-link bases-card" data-slug={entry.slug}>
+            <div class="bases-card">
               {imageSrc && !isColor && (
-                <div class="bases-card-image" style={imageAspect}>
-                  <img
-                    src={imageSrc}
-                    alt={entry.title}
-                    loading="lazy"
-                    style={{ objectFit: imageFit }}
-                  />
-                </div>
+                <a
+                  href={href}
+                  class="internal internal-link bases-card-image-link"
+                  data-slug={entry.slug}
+                >
+                  <div class="bases-card-image" style={imageAspect}>
+                    <img
+                      src={imageSrc}
+                      alt={entry.title}
+                      loading="lazy"
+                      style={{ objectFit: imageFit }}
+                    />
+                  </div>
+                </a>
               )}
               {imageSrc && isColor && (
-                <div
-                  class="bases-card-image bases-card-color"
-                  style={{ ...imageAspect, backgroundColor: imageSrc }}
-                />
+                <a
+                  href={href}
+                  class="internal internal-link bases-card-image-link"
+                  data-slug={entry.slug}
+                >
+                  <div
+                    class="bases-card-image bases-card-color"
+                    style={{ ...imageAspect, backgroundColor: imageSrc }}
+                  />
+                </a>
               )}
               <div class="bases-card-body">
-                <span class="bases-card-title">{entry.title}</span>
+                <a
+                  href={href}
+                  class="internal internal-link bases-card-title"
+                  data-slug={entry.slug}
+                >
+                  {entry.title}
+                </a>
                 <div class="bases-card-meta">
                   {cardMetaColumns.map((column) => {
                     const value = resolveEntryPropertyValue(column, entry);
@@ -122,13 +142,17 @@ const CardsView: ViewRenderer = ({
                     return (
                       <div class="bases-card-row">
                         <span class="bases-card-label">{getColumnLabel(column, basesData)}</span>
-                        <span class="bases-card-value">{renderCellValue(value, ctx)}</span>
+                        <span class="bases-card-value">
+                          {isTagProperty(column)
+                            ? renderTagLinks(value, ctx)
+                            : renderCellValue(value, ctx)}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            </a>
+            </div>
           );
         })}
       </div>

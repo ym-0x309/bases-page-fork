@@ -1,15 +1,60 @@
-import type { ComponentChild } from "preact";
 import type { FullSlug } from "@quartz-community/types";
+import type { ComponentChild } from "preact";
 
+import { slugifyPath, slugTag, transformLink } from "@quartz-community/utils";
 import type { BasesData, BasesEntry, BasesView } from "../../types";
 import { renderTextWithLinks } from "./links";
-import { transformLink, slugifyPath } from "@quartz-community/utils";
 
 type RenderCtx = {
   slug: string;
   allSlugs: string[];
   linkResolution: "absolute" | "relative" | "shortest";
 };
+
+const TAG_PROPERTIES = new Set(["tags", "note.tags", "file.tags"]);
+
+export function isTagProperty(column: string): boolean {
+  return TAG_PROPERTIES.has(column);
+}
+
+export function renderTagLinks(value: unknown, ctx: RenderCtx): ComponentChild {
+  const rawTags = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+
+  const tags = rawTags
+    .filter((tag): tag is string => typeof tag === "string")
+    .map((tag) => tag.replace(/^#+/, "").trim())
+    .filter(Boolean);
+
+  if (tags.length === 0) {
+    return <span class="bases-empty">—</span>;
+  }
+
+  const transformOpts = {
+    strategy: ctx.linkResolution,
+    allSlugs: ctx.allSlugs as FullSlug[],
+  };
+
+  return (
+    <span class="bases-list">
+      {tags.map((tag, index) => {
+        const targetSlug = `tags/${slugTag(tag)}`;
+
+        return (
+          <>
+            {index > 0 && <span class="bases-separator">, </span>}
+            <a
+              href={transformLink(ctx.slug as FullSlug, targetSlug, transformOpts)}
+              class="tag-link internal internal-link"
+              data-slug={targetSlug}
+            >
+              {tag}
+            </a>
+          </>
+        );
+      })}
+    </span>
+  );
+}
 
 /**
  * Detect file objects returned by asFile() in the expression engine.

@@ -1,14 +1,16 @@
-import type { ComponentChild } from "preact";
-import type { ViewRenderer, ViewTypeRegistration } from "../../types";
 import type { FullSlug } from "@quartz-community/types";
+import { transformLink } from "@quartz-community/utils";
+import type { ComponentChild } from "preact";
 import { i18n } from "../../i18n";
+import type { ViewRenderer, ViewTypeRegistration } from "../../types";
 import {
   getColumns,
   isEmptyValue,
+  isTagProperty,
   renderCellValue,
+  renderTagLinks,
   resolveEntryPropertyValue,
 } from "../shared/cell";
-import { transformLink } from "@quartz-community/utils";
 
 function formatMessage(template: string, values: Record<string, string | number>): string {
   return Object.entries(values).reduce(
@@ -46,6 +48,8 @@ const ListView: ViewRenderer = ({
             const primaryColumn = columns[0] ?? "file.name";
             const secondaryColumns = columns.slice(1);
 
+            const primaryRawValue = resolveEntryPropertyValue(primaryColumn, entry);
+
             const primaryValue: ComponentChild =
               primaryColumn === "file.name" ? (
                 <a
@@ -55,8 +59,10 @@ const ListView: ViewRenderer = ({
                 >
                   {entry.title}
                 </a>
+              ) : isTagProperty(primaryColumn) ? (
+                renderTagLinks(primaryRawValue, ctx)
               ) : (
-                renderCellValue(resolveEntryPropertyValue(primaryColumn, entry), ctx)
+                renderCellValue(primaryRawValue, ctx)
               );
 
             const secondaryItems: ComponentChild[] = [];
@@ -65,7 +71,11 @@ const ListView: ViewRenderer = ({
               if (isEmptyValue(value)) continue;
               secondaryItems.push(
                 <span class="bases-list-property">
-                  <span class="bases-rendered-value">{renderCellValue(value, ctx)}</span>
+                  <span class="bases-rendered-value">
+                    {isTagProperty(column)
+                      ? renderTagLinks(value, ctx)
+                      : renderCellValue(value, ctx)}
+                  </span>
                 </span>,
               );
             }

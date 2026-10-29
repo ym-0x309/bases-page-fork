@@ -1,5 +1,5 @@
 import type { FullSlug } from "@quartz-community/types";
-import { slugTag, transformLink } from "@quartz-community/utils";
+import { transformLink } from "@quartz-community/utils";
 import { i18n } from "../../i18n";
 import type { BasesEntry, ViewRenderer, ViewTypeRegistration } from "../../types";
 import {
@@ -7,7 +7,9 @@ import {
   getColumnLabel,
   getColumns,
   isEmptyValue,
+  isTagProperty,
   renderCellValue,
+  renderTagLinks,
   resolveEntryPropertyValue,
 } from "../shared/cell";
 import { computeSummary } from "../shared/summary";
@@ -40,50 +42,6 @@ function groupEntries(
   return groups.size > 0 ? groups : null;
 }
 
-function renderTagLinks(
-  value: unknown,
-  slug: string,
-  allSlugs: string[],
-  linkResolution: "absolute" | "relative" | "shortest",
-) {
-  const rawTags = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
-
-  const tags = rawTags
-    .filter((tag): tag is string => typeof tag === "string")
-    .map((tag) => tag.replace(/^#+/, "").trim())
-    .filter(Boolean);
-
-  if (tags.length === 0) {
-    return <span class="bases-empty">—</span>;
-  }
-
-  const transformOpts = {
-    strategy: linkResolution,
-    allSlugs: allSlugs as FullSlug[],
-  };
-
-  return (
-    <span class="bases-list">
-      {tags.map((tag, index) => {
-        const targetSlug = `tags/${slugTag(tag)}`;
-
-        return (
-          <>
-            {index > 0 && <span class="bases-separator">, </span>}
-            <a
-              href={transformLink(slug as FullSlug, targetSlug, transformOpts)}
-              class="tag-link internal internal-link"
-              data-slug={targetSlug}
-            >
-              {tag}
-            </a>
-          </>
-        );
-      })}
-    </span>
-  );
-}
-
 function renderRow(
   entry: BasesEntry,
   columns: string[],
@@ -100,7 +58,7 @@ function renderRow(
         const value = resolveEntryPropertyValue(column, entry);
         const display = formatValue(value);
         const isPrimary = column === "file.name" || column === "title";
-        const isTagsColumn = ["tags", "note.tags", "file.tags"].includes(column);
+        const isTagsColumn = isTagProperty(column);
         const columnWidth = view.columnSize?.[column];
         const style = columnWidth
           ? { width: `${columnWidth}px`, minWidth: `${columnWidth}px` }
@@ -108,7 +66,7 @@ function renderRow(
         return (
           <td data-value={display} style={style}>
             {isTagsColumn ? (
-              renderTagLinks(value, slug, allSlugs, linkResolution)
+              renderTagLinks(value, ctx)
             ) : isPrimary ? (
               <a
                 href={transformLink(slug as FullSlug, entry.slug, transformOpts)}
